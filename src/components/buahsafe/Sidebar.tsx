@@ -1,17 +1,39 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Cpu, ClipboardList, Leaf, Activity } from "lucide-react";
+import {
+  LayoutDashboard, Cpu, ClipboardList, Leaf, Activity,
+  ScanLine, BarChart3, Database, LogOut,
+} from "lucide-react";
 import { getDevices } from "@/lib/buahsafe-data";
 import { useEffect, useState } from "react";
+import { useAuth, Role, ROLE_LABELS, ROLE_COLORS } from "@/lib/auth";
 
-const items = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/devices", label: "Devices", icon: Cpu },
-  { to: "/history", label: "History", icon: ClipboardList },
+interface NavItem {
+  to: string;
+  label: string;
+  icon: React.ElementType;
+  roles: Role[];
+}
+
+const ALL_ITEMS: NavItem[] = [
+  { to: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["supervisor", "owner"] },
+  { to: "/scan", label: "Scan", icon: ScanLine, roles: ["operator"] },
+  { to: "/devices", label: "Devices", icon: Cpu, roles: ["supervisor", "owner"] },
+  { to: "/history", label: "History", icon: ClipboardList, roles: ["operator", "supervisor", "owner"] },
+  { to: "/analytics", label: "Analytics", icon: BarChart3, roles: ["supervisor", "owner"] },
+  { to: "/master-data", label: "Master Data", icon: Database, roles: ["owner"] },
 ];
+
+function useVisibleItems() {
+  const { user } = useAuth();
+  if (!user) return [];
+  return ALL_ITEMS.filter((i) => i.roles.includes(user.role));
+}
 
 export function AppSidebar() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [counts, setCounts] = useState({ online: 0, total: 0 });
+  const { user, logout } = useAuth();
+  const items = useVisibleItems();
 
   useEffect(() => {
     const update = () => {
@@ -38,7 +60,7 @@ export function AppSidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {items.map((item) => {
           const active = item.to === "/" ? path === "/" : path.startsWith(item.to);
           return (
@@ -63,7 +85,7 @@ export function AppSidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border space-y-3">
         <div className="rounded-lg border border-border p-3 bg-card">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Activity className="w-3.5 h-3.5 text-primary" />
@@ -79,6 +101,29 @@ export function AppSidebar() {
             />
           </div>
         </div>
+
+        {user && (
+          <div className="rounded-lg border border-border p-3 bg-card">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">
+                {user.name.split(" ").map((s) => s[0]).slice(0, 2).join("")}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate">{user.name}</div>
+                <span className={`inline-block mt-0.5 text-[10px] px-1.5 py-0.5 rounded border ${ROLE_COLORS[user.role]}`}>
+                  {ROLE_LABELS[user.role]}
+                </span>
+              </div>
+              <button
+                onClick={logout}
+                className="w-7 h-7 rounded-md hover:bg-accent flex items-center justify-center text-muted-foreground"
+                title="Logout"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );
@@ -86,6 +131,8 @@ export function AppSidebar() {
 
 export function MobileNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const items = useVisibleItems().slice(0, 5);
+  if (items.length === 0) return null;
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-card border-t border-border flex">
       {items.map((item) => {

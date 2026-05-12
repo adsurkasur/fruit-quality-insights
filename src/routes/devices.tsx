@@ -30,6 +30,7 @@ function DevicesPage() {
     <PageLayout
       title="Device Management"
       subtitle="Monitor and manage your BuahSafe scanner fleet"
+      roles={["supervisor", "owner"]}
     >
       <div className="text-sm text-muted-foreground mb-6">
         <span className="font-medium text-foreground">{devices.length} devices</span>

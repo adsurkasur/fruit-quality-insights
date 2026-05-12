@@ -151,7 +151,7 @@ function Dashboard() {
   const recent = [...scans].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).slice(0, 8);
 
   return (
-    <PageLayout title="Dashboard" subtitle="Real-time fleet quality intelligence">
+    <PageLayout title="Dashboard" subtitle="Real-time fleet quality intelligence" roles={["supervisor", "owner"]}>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard index={0} title="Total Scans Today" value={totalToday} icon={ScanLine} accent="slate" />
         <StatCard

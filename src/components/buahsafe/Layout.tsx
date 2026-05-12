@@ -1,32 +1,45 @@
 import { ReactNode, useEffect, useState } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { AppSidebar, MobileNav } from "./Sidebar";
-import { Bell } from "lucide-react";
 import { format } from "date-fns";
-import { getScans } from "@/lib/buahsafe-data";
+import { NotificationPanel } from "./NotificationPanel";
+import { useAuth, Role } from "@/lib/auth";
+import { ShieldAlert } from "lucide-react";
 
 interface Props {
   title: string;
   subtitle?: string;
   children: ReactNode;
+  roles?: Role[];
 }
 
-export function PageLayout({ title, subtitle, children }: Props) {
-  const [now, setNow] = useState(new Date());
-  const [anomalies, setAnomalies] = useState(0);
+export function PageLayout({ title, subtitle, children, roles }: Props) {
+  const [now, setNow] = useState<Date | null>(null);
+  const { user, ready } = useAuth();
+  const navigate = useNavigate();
+  const path = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
-    const update = () => {
-      setNow(new Date());
-      const cutoff = Date.now() - 3600_000;
-      const count = getScans().filter(
-        (s) => s.result === "ANOMALI" && new Date(s.timestamp).getTime() > cutoff,
-      ).length;
-      setAnomalies(count);
-    };
-    update();
-    const i = setInterval(update, 10_000);
+    setNow(new Date());
+    const i = setInterval(() => setNow(new Date()), 10_000);
     return () => clearInterval(i);
   }, []);
+
+  useEffect(() => {
+    if (ready && !user && path !== "/login") {
+      navigate({ to: "/login" });
+    }
+  }, [ready, user, path, navigate]);
+
+  if (!ready || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-sm text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
+
+  const allowed = !roles || roles.includes(user.role);
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -41,21 +54,26 @@ export function PageLayout({ title, subtitle, children }: Props) {
               )}
             </div>
             <div className="flex items-center gap-4">
-              <div className="hidden sm:block text-xs text-muted-foreground">
-                Updated {format(now, "HH:mm:ss")}
+              <div className="hidden sm:block text-xs text-muted-foreground tabular-nums" suppressHydrationWarning>
+                {now ? `Updated ${format(now, "HH:mm:ss")}` : ""}
               </div>
-              <button className="relative w-9 h-9 rounded-lg border border-border bg-card flex items-center justify-center hover:bg-accent">
-                <Bell className="w-4 h-4" />
-                {anomalies > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-white text-[10px] font-medium flex items-center justify-center">
-                    {anomalies}
-                  </span>
-                )}
-              </button>
+              <NotificationPanel />
             </div>
           </div>
         </header>
-        <div className="px-6 lg:px-10 py-6 lg:py-8">{children}</div>
+        <div className="px-6 lg:px-10 py-6 lg:py-8">
+          {allowed ? (
+            children
+          ) : (
+            <div className="rounded-xl border border-border bg-card p-10 text-center">
+              <ShieldAlert className="w-10 h-10 text-amber-500 mx-auto" />
+              <h2 className="mt-3 text-lg font-semibold">Access restricted</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your role ({user.role}) doesn't have access to this page.
+              </p>
+            </div>
+          )}
+        </div>
       </main>
       <MobileNav />
     </div>
