@@ -19,6 +19,7 @@ export interface ScanRecord {
   amplitudeAvg: number;
   batchId: string;
   operatorNote?: string;
+  operatorId?: string;
 }
 
 const DEVICES_KEY = "buahsafe.devices.v1";
@@ -161,9 +162,11 @@ export function saveScans(scans: ScanRecord[]) {
   localStorage.setItem(SCANS_KEY, JSON.stringify(scans));
 }
 
-export function addScan(): ScanRecord {
-  const devices = getDevices().filter((d) => d.status !== "offline");
-  const device = devices[randInt(0, devices.length - 1)];
+export function addScan(opts?: { operatorId?: string; deviceId?: string }): ScanRecord {
+  const available = getDevices().filter((d) => d.status !== "offline");
+  const device =
+    (opts?.deviceId && available.find((d) => d.id === opts.deviceId)) ||
+    available[randInt(0, available.length - 1)];
   const isAnomali = Math.random() < 0.25;
   const scans = getScans();
   const lastBatch = scans[scans.length - 1]?.batchId || "BATCH-2024-001";
