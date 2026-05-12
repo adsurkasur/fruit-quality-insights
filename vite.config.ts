@@ -14,7 +14,11 @@ export default defineConfig({
     tailwindcss(),
     tanstackStart({
       appRoot: "./src",
+      // Explicitly point to the standard entry points
+      entryClient: "./src/entry-client.tsx",
+      entryServer: "./src/entry-server.tsx",
       server: {
+        // Use our custom Cloudflare wrapper only when NOT on Vercel
         entry: process.env.VERCEL ? undefined : "./src/server.ts",
       },
     }),
