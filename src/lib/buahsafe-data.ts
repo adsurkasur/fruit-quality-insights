@@ -179,6 +179,7 @@ export function addScan(opts?: { operatorId?: string; deviceId?: string }): Scan
     confidence: isAnomali ? randInt(55, 89) : randInt(75, 99),
     amplitudeAvg: isAnomali ? randInt(180, 270) : randInt(280, 420),
     batchId: lastBatch,
+    operatorId: opts?.operatorId,
   };
   scans.push(scan);
   saveScans(scans);
