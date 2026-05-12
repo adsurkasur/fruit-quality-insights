@@ -9,6 +9,7 @@ export default defineConfig({
     tsconfigPaths(),
     tailwindcss(),
     tanstackStart({
+      ssr: false,
       appRoot: "./src",
     }),
     react(),
