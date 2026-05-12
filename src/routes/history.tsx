@@ -7,6 +7,7 @@ import { Search, X, ArrowUpDown } from "lucide-react";
 import { PageLayout } from "@/components/buahsafe/Layout";
 import { ResultBadge } from "@/components/buahsafe/StatusBadge";
 import { ensureSeed, getScans, getDevices, DEVICE_COLORS, ScanRecord } from "@/lib/buahsafe-data";
+import { useAuth } from "@/lib/auth";
 
 const searchSchema = z.object({
   device: fallback(z.string(), "all").default("all"),
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/history")({
 function HistoryPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/history" });
+  const { user } = useAuth();
   const [scans, setScans] = useState<ScanRecord[]>([]);
   const [sortDesc, setSortDesc] = useState(true);
 
@@ -36,6 +38,7 @@ function HistoryPage() {
 
   const filtered = useMemo(() => {
     let r = scans.slice();
+    if (user?.role === "operator") r = r.filter((s) => s.operatorId === user.id);
     if (search.device !== "all") r = r.filter((s) => s.deviceId === search.device);
     if (search.result !== "all") r = r.filter((s) => s.result === search.result);
     if (search.q) r = r.filter((s) => s.batchId.toLowerCase().includes(search.q.toLowerCase()));
@@ -43,7 +46,7 @@ function HistoryPage() {
     if (search.to) r = r.filter((s) => s.timestamp <= search.to + "T23:59:59");
     r.sort((a, b) => sortDesc ? b.timestamp.localeCompare(a.timestamp) : a.timestamp.localeCompare(b.timestamp));
     return r;
-  }, [scans, search, sortDesc]);
+  }, [scans, search, sortDesc, user]);
 
   const passes = filtered.filter((s) => s.result === "NORMAL").length;
   const passRate = filtered.length ? Math.round((passes / filtered.length) * 100) : 0;
@@ -63,7 +66,7 @@ function HistoryPage() {
   const clearChip = (key: string) => setParam(key, key === "device" || key === "result" ? "all" : "");
 
   return (
-    <PageLayout title="Scan History" subtitle="Search, filter, and audit every scan record">
+    <PageLayout title="Scan History" subtitle={user?.role === "operator" ? "Your scan records" : "Search, filter, and audit every scan record"}>
       {/* Filters bar */}
       <div className="sticky top-[73px] z-20 -mx-6 lg:-mx-10 px-6 lg:px-10 py-3 bg-background/90 backdrop-blur border-b border-border">
         <div className="flex flex-wrap items-center gap-2">
