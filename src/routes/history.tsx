@@ -50,7 +50,7 @@ function HistoryPage() {
   const anomalies = filtered.length - passes;
 
   const setParam = (key: string, value: string) => {
-    navigate({ search: (prev) => ({ ...prev, [key]: value }) as any });
+    navigate({ search: (prev: any) => ({ ...prev, [key]: value }) as any });
   };
 
   const activeChips: { key: string; label: string }[] = [];
