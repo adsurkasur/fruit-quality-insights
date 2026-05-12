@@ -6,10 +6,14 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [
-    TanStackRouterVite(),
+    TanStackRouterVite({
+      routesDirectory: "./src/routes",
+      generatedRouteTree: "./src/routeTree.gen.ts",
+    }),
     tsconfigPaths(),
     tailwindcss(),
     tanstackStart({
+      appRoot: "./src",
       server: {
         entry: process.env.VERCEL ? undefined : "./src/server.ts",
       },
