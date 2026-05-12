@@ -10,6 +10,7 @@ import {
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
+import { AuthProvider } from "@/lib/auth";
 
 function NotFoundComponent() {
   return (
@@ -80,8 +81,10 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
-      <Toaster position="top-right" />
+      <AuthProvider>
+        <Outlet />
+        <Toaster position="top-right" />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
